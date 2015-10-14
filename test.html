@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Title!</title>
+        <style>
+          #map {
+            width: 500px;
+            height: 400px;
+          }
+        </style>
+        <script src="https://maps.googleapis.com/maps/api/js"></script>
+        <script>
+          function initialize() {
+            var mapCanvas = document.getElementById('map');
+            var mapOptions = {
+              center: new google.maps.LatLng(37.9100799,-122.0651617),
+              zoom: 3,
+              mapTypeId: google.maps.MapTypeId.ROADMAP
+            }
+            var map = new google.maps.Map(mapCanvas)
+            var marker = new google.maps.Marker({
+              position: 37.9100799,-122.0651617,
+              map: map,
+              icon: iconBase + '/img/yoda.png'
+            });
+          }
+          google.maps.event.addDomListener(window, 'load', initialize);
+        </script>
+    </head>
+    <body style="margin: 0">
+        <h1 style="background-color: #ddd; color: #888; margin: 0 height: 50px">
+          Shantanu's template
+        </h1>
+
+
+
+  <div id="map"></div>
+</body>
+</html>
