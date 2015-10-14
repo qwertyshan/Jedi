@@ -26,57 +26,13 @@ import codecs
 from models import Character, Message, Location
 from google.appengine.ext import ndb
 
+import map
+import aliases
+
 import os
 import jinja2
 jinja_env = jinja2.Environment(autoescape=True,loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')))
 
-
-# mapping aliases to character names
-aliases = {
-    'chewbacca': 'Chewbacca',
-    'wookie': 'Chewbacca',
-    'chewy': 'Chewbacca',
-    'chewie': 'Chewbacca',
-    'r2d2': 'R2-D2',
-    'droid': 'R2-D2',
-    'r2': 'R2-D2',
-    'r2-d2': 'R2-D2',
-    'r2-d2': 'R2-D2',
-    'yoda': 'Yoda',
-    'master-yoda': 'Yoda',
-    'leia': 'Princess Leia',
-    'princess': 'Princess Leia',
-    'princess leia': 'Princess Leia',
-    'luke': 'Luke Skywalker',
-    'skywalker': 'Luke Skywalker',
-    'luke skywalker': 'Luke Skywalker',
-    'han': 'Han Solo',
-    'solo': 'Han Solo',
-    'han solo': 'Han Solo',
-    'c3p0': 'C-3PO',
-    'c-3p0': 'C-3PO',
-    'c3po': 'C-3PO',
-    'c-3po': 'C-3PO',
-    'obi-wan': 'Obi-Wan Kenobi',
-    'kenobi': 'Obi-Wan Kenobi',
-    'ben': 'Obi-Wan Kenobi',
-    'obi': 'Obi-Wan Kenobi',
-    'obi-wan kenobi': 'Obi-Wan Kenobi',
-    'emperor': 'Emperor Palpatine',
-    'palpatine': 'Emperor Palpatine',
-    'sidious': 'Emperor Palpatine',
-    'emperor palpatine': 'Emperor Palpatine',
-    'vader': 'Darth Vader',
-    'darth': 'Darth Vader',
-    'darth vader': 'Darth Vader',
-    'storm': 'Storm Trooper',
-    'trooper': 'Storm Trooper',
-    'stormtrooper': 'Storm Trooper',
-    'storm trooper': 'Storm Trooper',
-    'boba': 'Boba Fett',
-    'fett': 'Boba Fett',
-    'boba fett': 'Boba Fett'
-}
 
 class Handler(webapp2.RequestHandler):
     def write(self, *a, **kw):
@@ -99,21 +55,9 @@ class MainHandler(Handler):
         # Get characters
         characters = Character.query().fetch(20)
         self.render('form.html', messages=messages, characters=characters, **kw)
-        #self.response.write(form % {"error": error, "character": character, "address": address})
 
     # Initial page load
     def get(self):
-        '''
-        for a, c in aliases.items():
-            print a, c
-            q = Character.query(Character.name == c)
-            r = q.get()
-            print "RESULT: "
-            print r
-            if a not in r.alias:
-                r.alias.append(a)
-                r.put()
-        '''
         character = Character(name="")
         location = Location()
         location.latlng=ndb.GeoPt(37.7749295, -122.4194155)
@@ -127,9 +71,9 @@ class MainHandler(Handler):
             rawCharacter =  cgi.escape(self.request.get("character"), quote = True)
             rawLocation =   cgi.escape(self.request.get("address"), quote = True)
             # Validate character
-            (character, charError) = validateCharacter(rawCharacter)
+            (character, charError) = map.validateCharacter(rawCharacter)
             # Validate location
-            location = validateLocation(rawLocation)
+            location = map.validateLocation(rawLocation)
             error, msgError = "", ""
 
             # Check validation errors and format error message
@@ -187,13 +131,6 @@ class MainHandler(Handler):
 
 
 '''
-class ThanksHandler(webapp2.RequestHandler):
-    def get(self):
-        error = self.request.get("error")
-        self.response.write(error)
-'''
-
-'''
 class SMSHandler(webapp2.RequestHandler):
     def post(self):
 
@@ -236,40 +173,6 @@ class SMSHandler(webapp2.RequestHandler):
         return str(response)
 '''
 
-
-
-def validateCharacter(rawCharacter):
-    # debug: print Character table
-    for ch in Character.query().fetch(10):
-        print ch
-
-    # Validate character
-    formattedChar = rawCharacter.lower()
-    character = aliases.get(formattedChar)
-    print rawCharacter
-    print formattedChar
-    print "Character: %s" % character
-    character = Character.query(Character.name == character).get()
-    print character
-    if character != None:
-        error = ""
-        print ('character found')
-        print character
-    else:
-        error = "Invalid character [%s]" % rawCharacter
-
-    print "error0: "+error
-    return (character, error)
-
-def validateLocation(rawLocation):
-    # Validate location
-    location = geocode(rawLocation)
-    if location.status != "OK":
-        location.status = "Invalid location [%s] [Error: %s]" % (rawLocation, str(location.status))
-    return location
-
-#def processInput(character, address):
-
 def recordMessage(sourceType, sourcePhone, sourceIP, character, location, rawMessage, errorstr):
     message = Message()
 
@@ -284,36 +187,6 @@ def recordMessage(sourceType, sourcePhone, sourceIP, character, location, rawMes
 
     message.put()
     return True
-
-def geocode(rawLocation):
-    """
-
-    :rtype : Location
-    """
-    url = "https://maps.googleapis.com/maps/api/geocode/json?address=%s" % rawLocation.replace(" ","+")
-
-    response = urllib2.urlopen(url)
-    #jsongeocode = response.read()
-    geocode = json.load(response)
-    pprint.pprint(geocode)
-
-    location = Location()
-    location.status = geocode["status"].encode('utf_8').decode('utf_8')
-    if location.status == "OK":
-        location.address = geocode["results"][0]["formatted_address"].encode('utf_8').decode('utf_8')
-        location.latlng = ndb.GeoPt(geocode["results"][0]["geometry"]["location"]["lat"], geocode["results"][0]["geometry"]["location"]["lng"])
-    else:
-        location.address = None
-        location.latlng = None
-
-    print "in geocode"
-    print location.status.encode('utf_8')
-    print type(location.status)
-    print location.address.encode('utf_8')
-    print type(location.address)
-    #print location.address.decode('utf_8')
-    #print location.address
-    return location
 
 class LoadDB(webapp2.RequestHandler):
     def get(self):

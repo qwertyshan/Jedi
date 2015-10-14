@@ -2,8 +2,12 @@ body {
   padding-top: 80px;
 }
 
-section {
-  margin: 20
+body .modal {
+  width: 90%; /* desired relative width */
+  left: 5%; /* (100%-width)/2 */
+  /* place center */
+  margin-left:auto;
+  margin-right:auto;
 }
 
 #map {
