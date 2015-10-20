@@ -44,3 +44,19 @@ aliases = {
     'fett': 'Boba Fett',
     'boba fett': 'Boba Fett'
 }
+
+# Character list
+charlist = [
+    ['Boba Fett', 'Boba-Fett-icon.png'],
+    ['C-3PO', 'C3PO-icon.png'],
+    ['Chewbacca', 'Chewbacca-icon.png'],
+    ['Darth Vader', 'Darth-Vader-icon.png'],
+    ['Emperor Palpatine', 'Emperor-icon.png'],
+    ['Han Solo', 'Han-Solo-icon.png'],
+    ['Princess Leia', 'Leia-icon.png'],
+    ['Luke Skywalker', 'Luke-Skywalker-icon.png'],
+    ['Obi-Wan Kenobi', 'Obi-Wan-icon.png'],
+    ['R2-D2', 'R2D2-icon.png'],
+    ['Storm Trooper', 'Stormtrooper-icon.png'],
+    ['Yoda', 'Yoda-icon.png']
+]

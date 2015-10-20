@@ -22,17 +22,48 @@ import datetime
 import pprint
 import cgi
 import codecs
+import logging
 #from twilio import twiml
-from models import Character, Message, Location
+
+from google.appengine.api import memcache
 from google.appengine.ext import ndb
 
 import map
 import aliases
+from models import Character, Message, Location
 
 import os
 import jinja2
-jinja_env = jinja2.Environment(autoescape=True,loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')))
+jinja_env = jinja2.Environment(
+                    autoescape=True,
+                    loader=jinja2.FileSystemLoader(
+                            os.path.join(os.path.dirname(__file__), 'templates')
+                            )
+                    )
 
+def cache(key, update = False):
+    msgs = memcache.get(key)
+    if msgs is None or update:
+        print "DB CACHE QUERY %s" % key
+        if key is 'top_msgs':
+            msgs = Message.query().order(-Message.createDate).fetch(20)
+        elif key is 'get_chars':
+            msgs = Character.all()
+        msgs = list(msgs)
+        memcache.set(key, msgs)
+    return msgs
+
+def top_msgs(update = False):
+    key = 'top_msgs'
+    msgs = cache(key, update)
+    print msgs
+    return msgs
+
+def get_chars(update = False):
+    key = 'get_chars'
+    msgs = cache(key, update)
+    print msgs
+    return msgs
 
 class Handler(webapp2.RequestHandler):
     def write(self, *a, **kw):
@@ -47,13 +78,10 @@ class Handler(webapp2.RequestHandler):
 
 class MainHandler(Handler):
     def writeHTML(self, **kw):
-        #debug
-        for ch in Character.query().order(Character.name).fetch(50):
-            print ch
         # Get messages
-        messages = Message.query().order(-Message.createDate).fetch(20)
+        messages = top_msgs()
         # Get characters
-        characters = Character.query().fetch(20)
+        characters = get_chars()
         self.render('form.html', messages=messages, characters=characters, **kw)
 
     # Initial page load
@@ -99,8 +127,9 @@ class MainHandler(Handler):
             print type(msgError)
             # Store in Message store
             if recordMessage("WebForm", None, self.request.remote_addr, msgChar, location, rawCharacter+" "+rawLocation, msgError):
+                print "IN APP:"
+                top_msgs(True)
                 self.writeHTML(error=error, character=character, location=location)
-                #self.redirect("/thanks")
             else:
                 error = "App Error: Failed to insert message."
                 self.writeHTML(error=error, character=character, location=location)
@@ -110,14 +139,10 @@ class MainHandler(Handler):
             messagekey = ndb.Key(urlsafe=messageid)
             message = Message()
             message = messagekey.get()
-            character = Character().query(Character.name==message.character).get()
+            character = Character.query(Character.name == message.character).get()
             location = Location()
             location.address = message.address
             location.latlng = message.latlng
-            # Debug
-            print message
-            print character
-            print location
 
             # If message found
             if not message:
@@ -185,36 +210,26 @@ def recordMessage(sourceType, sourcePhone, sourceIP, character, location, rawMes
     message.rawMessage =    rawMessage
     message.error =         errorstr
 
-    message.put()
-    return True
+    if message.put():
+        return True
+    else:
+        return False
 
 class LoadDB(webapp2.RequestHandler):
     def get(self):
         # Loading character DB
-        charlist = [
-            ['Boba Fett', 'Boba-Fett-icon.png'],
-            ['C-3PO', 'C3PO-icon.png'],
-            ['Chewbacca', 'Chewbacca-icon.png'],
-            ['Darth Vader', 'Darth-Vader-icon.png'],
-            ['Emperor Palpatine', 'Emperor-icon.png'],
-            ['Han Solo', 'Han-Solo-icon.png'],
-            ['Princess Leia', 'Leia-icon.png'],
-            ['Luke Skywalker', 'Luke-Skywalker-icon.png'],
-            ['Obi-Wan Kenobi', 'Obi-Wan-icon.png'],
-            ['R2-D2', 'R2D2-icon.png'],
-            ['Storm Trooper', 'Stormtrooper-icon.png'],
-            ['Yoda', 'Yoda-icon.png']
-        ]
         char = Character()
-        for x in charlist:
+        for x in aliases.charlist:
             print x[0]
             print x[1]
             char = Character.get_or_insert(str(x[0]), name=str(x[0]), avatarFile=str(x[1]))
             print char
             char.put()
 
-        for ch in Character.query().order(Character.name).fetch(50):
+        for ch in Character.query().order(Character.name).fetch():
             print ch
+
+        get_chars(True)
         self.response.write('Loaded DB')
 
 app = webapp2.WSGIApplication([

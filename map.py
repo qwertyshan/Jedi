@@ -46,8 +46,8 @@ def geocode(rawLocation):
     url = "https://maps.googleapis.com/maps/api/geocode/json?address=%s" % rawLocation.replace(" ","+")
 
     response = urllib2.urlopen(url)
-    #jsongeocode = response.read()
     geocode = json.load(response)
+    #debug
     pprint.pprint(geocode)
 
     location = Location()

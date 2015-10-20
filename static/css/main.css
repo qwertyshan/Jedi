@@ -2,12 +2,15 @@ body {
   padding-top: 80px;
 }
 
-body .modal {
-  width: 90%; /* desired relative width */
-  left: 5%; /* (100%-width)/2 */
+#msgModal .modal-dialog {
+  width: 80%; /* desired relative width */
   /* place center */
   margin-left:auto;
   margin-right:auto;
+}
+
+#msgModal .modal-dialog .modal-body {
+  overflow-y: auto;
 }
 
 #map {

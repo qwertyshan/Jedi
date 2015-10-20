@@ -3,151 +3,184 @@
 {% block content %}
 
   <div class = "container">
-    <div id="map"></div>
-  </div>
 
-<!-- Debugs
-  <div class = "container">
-  character.name: {{character.name}} <br>
-  character.avatarFile: {{character.avatarFile}} <br>
+    <div class = "col-sm-12" id="map"></div>
 
-  location.address: {{location.address}} <br>
-  location.latlng: {{location.latlng.lat}} {{location.latlng.lon}}<br>
-  location.error: {{location.error}} <br>
-  </div>
--->
-
-  <div class = "container well text-center" id = "input">
-    <p class="lead">Select a Star Wars character, and enter an address.</p>
-    <form class = "form" method = "post" action = "/">
+    <div class = "row well col-sm-10 col-sm-offset-1 text-center" id = "input">
+      <p class="lead">Select a Star Wars character, and enter an address.</p>
+      <form class = "form" method = "post" action = "/">
+          <div class = "row">
+            <div class = "character col-sm-1 col-sm-offset-3">
+            {% for char in characters %}
+              <label>
+                <input type = "radio" name = "character" value = "{{char.name}}" />
+                <img src="/images/{{char.avatarFile}}" height="64" width="64" data-toggle="tooltip" title="{{char.name}}">
+              </label>
+            </div>
+              {% if loop.index is divisibleby(6) %}
+          </div>
+          <div class="row">
+            <div class = "character col-sm-1 col-sm-offset-3">
+              {% else %}
+            <div class = "character col-sm-1">
+              {% endif %}
+            {% endfor %}
+            </div>
+          </div>
+        <div class = "form-group form-group-lg">
+          <div class = "col-sm-6 col-sm-offset-3">
+            <input type = "text" class = "form-control" id = "address" name = "address" value = "{{location.address}}" placeholder="Enter an address">
+          </div>
+        </div>
+        <div class = "col-sm-4 col-sm-offset-4 text-center" id = "btn">
+          <button type="submit" class="btn btn-primary btn-lg">Map it!</button>
+        </div>
+      </form>
+      <div class = "col-sm-8 col-sm-offset-2 text-center">
+        {% if error|truncate(4, True, '') == 'Move' %}
         <div class = "row">
-          <div class = "character col-sm-1 col-sm-offset-3">
-          {% for char in characters %}
-            <label>
-              <input type = "radio" name = "character" value = "{{char.name}}" />
-              <img src="/images/{{char.avatarFile}}" height="64" width="64" data-toggle="tooltip" title="{{char.name}}">
-            </label>
-          </div>
-            {% if loop.index is divisibleby(6) %}
+          <div class="alert alert-success" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>{{error}}</div>
         </div>
-        <div class="row">
-          <div class = "character col-sm-1 col-sm-offset-3">
-            {% else %}
-          <div class = "character col-sm-1">
-            {% endif %}
-          {% endfor %}
-          </div>
+        {% elif error != '' %}
+        <div class = "row">
+          <div class="alert alert-danger" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>{{error}}</div>
         </div>
-      <div class = "form-group form-group-lg">
-        <div class = "col-sm-6 col-sm-offset-3">
-          <input type = "text" class = "form-control" id = "address" name = "address" value = "{{location.address}}" placeholder="Enter an address">
-        </div>
+        {% endif %}
       </div>
-      <div class = "col-sm-4 col-sm-offset-4 text-center" id = "btn">
-        <button type="submit" class="btn btn-primary btn-lg">Map it!</button>
-      </div>
-    </form>
-    <div class = "col-sm-8 col-sm-offset-2 text-center">
-      {% if error|truncate(4, True, '') == 'Move' %}
-      <div class = "row">
-        <div class="alert alert-success" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>{{error}}</div>
-      </div>
-      {% elif error != '' %}
-      <div class = "row">
-        <div class="alert alert-danger" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>{{error}}</div>
-      </div>
-      {% endif %}
-    </div>
-  </div>
+    </div id = "input">
 
-  <div class = "container">
-    <div class = "panel panel-default" id = "messageTable">
-      <div class = "panel-heading">Messages history</div>
-      <div class = "panel-body">
-        <button type="button" class="btn btn-default btn-md" data-toggle="modal" data-target="#myModal">
-          See previous messages
-        </button>
-      </div>
-    </div>
-  </section>
-  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title" id="myModalLabel">Message history</h4>
+    <div class = "row">
+      <div class = "col-sm-4 col-sm-offset-2">
+        <div class = "panel panel-success" id = "messageTable">
+          <div class = "panel-heading">
+            <h3 class="panel-title">
+              Messages archive <span class = "glyphicon glyphicon-aligh-right glyphicon-folder-open" aria-hidden="true">
+            </h3>
+          </div>
+          <div class = "panel-body">
+            <button type="button" class="btn btn-default btn-md" data-toggle="modal" data-target="#msgModal">
+              See previous messages
+            </button>
+          </div>
         </div>
-        <div class="modal-body">
-          <div class = "table-responsive">
-            <table class = "table table-striped table-condensed">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Source Type</th>
-                  <th>Source ID</th>
-                  <th>Character</th>
-                  <th>Address</th>
-                  <th>Lat, Lon</th>
-                  <th>Error</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for msg in messages %}
-                <tr{% if msg.error != "" %} class="text-muted"{% endif %}>
-                  <td>{{msg.createDate.strftime("%x %X")}}</td>
-                  <td>{{msg.sourceType}}</td>
-                  {% if msg.sourceType == "SMS" %}
-                    <td>{{msg.sourcePhone}}</td>
-                  {% elif msg.sourceType == "WebForm" %}
-                    <td>...{{msg.sourceIP[-6::]}}</td>
-                  {% endif %}
-                  <td>{{msg.character}}</td>
-                  <td>{{msg.address}}</td>
-                  <td>
-                    {% if msg.latlng %}
-                      {{msg.latlng.lat|round(2)}}, {{msg.latlng.lon|round(2)}}
+      </div>
+      <div class = "col-sm-4">
+        <div class = "panel panel-default" id = "techStack">
+          <div class = "panel-heading">
+            <h3 class="panel-title">
+              Technology stack <span class = "glyphicon glyphicon-aligh-right glyphicon-cog" aria-hidden="true"></span>
+            </h3>
+          </div>
+          <div class = "panel-body">
+            Here are the technologies used in this app.
+          </div>
+          <!-- List group -->
+          <ul class = "list-group" id="techStackList">
+            <li class = "list-group-item">Frontend
+              <ul>
+                <li>Design Framework: Twitter Bootstrap</li>
+                <li><a href = "http://www.iconarchive.com/show/starwars-longshadow-flat-icons-by-creativeflip.html">Icon Archive</a></li>
+              </ul>
+            </li>
+            <li class = "list-group-item">Backend
+              <ul>
+                <li>Programming Language: Python</li>
+                <li>Template Engine: Jinja</li>
+                <li>Application Framework: webapp2</li>
+                <li>Database: Google Datastore</li>
+              </ul>
+            </li>
+            <li class = "list-group-item">APIs and Services
+              <ul>
+                <li>Google Maps Geocoding API</li>
+                <li>Google Maps Javascript API</li>
+                <li>Twilio</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!-- row -->
+
+    <div class="modal fade" id="msgModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">Message history</h4>
+          </div>
+          <div class="modal-body">
+            <div class = "table-responsive">
+              <table class = "table table-striped table-condensed">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Source Type</th>
+                    <th>Source ID</th>
+                    <th>Character</th>
+                    <th>Address</th>
+                    <th>Lat, Lon</th>
+                    <th>Error</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for msg in messages %}
+                  <tr{% if msg.error != "" %} class="text-muted"{% endif %}>
+                    <td>{{msg.createDate.strftime("%x %X")}}</td>
+                    <td>{{msg.sourceType}}</td>
+                    {% if msg.sourceType == "SMS" %}
+                      <td>{{msg.sourcePhone}}</td>
+                    {% elif msg.sourceType == "WebForm" %}
+                      <td>...{{msg.sourceIP[-6::]}}</td>
                     {% endif %}
-                  </td>
-                  <td>
-                    {% if msg.error != "" %}
-                    <button class="btn btn-danger btn-sm" type="button" data-toggle="collapse" data-target="#error{{msg.createDate.strftime("%M%S%f")}}" aria-expanded="false" aria-controls="error{{msg.createDate.strftime("%M%S%f")}}">
-                      See error
-                    </button>
-                    {% endif %}
-                  </td>
-                  <td>
-                    {% if msg.error == "" %}
-                    <form method = "post" action = "/">
-                      <input type = "hidden" name = "messageid" value = "{{msg.key.urlsafe()}}">
-                      <button type = "submit" class="btn btn-success btn-sm">Map it!</button>
-                    </form>
-                    {% else %}
-                    <button type = "submit" class="btn btn-default btn-sm disabled">Map it!</button>
-                    {% endif %}
-                  </td>
-                </tr>
-                {% if msg.error != "" %}
-                <tr>
-                  <div class="collapse" id="error{{msg.createDate.strftime("%M%S%f")}}">
-                    <div class = "alert alert-danger">
-                      {{msg.error}}
+                    <td>{{msg.character}}</td>
+                    <td>{{msg.address}}</td>
+                    <td>
+                      {% if msg.latlng %}
+                        {{msg.latlng.lat|round(2)}}, {{msg.latlng.lon|round(2)}}
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if msg.error != "" %}
+                      <button class="btn btn-danger btn-sm" type="button" data-toggle="collapse" data-target="#error{{msg.createDate.strftime("%M%S%f")}}" aria-expanded="false" aria-controls="error{{msg.createDate.strftime("%M%S%f")}}">
+                        See error
+                      </button>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if msg.error == "" %}
+                      <form method = "post" action = "/">
+                        <input type = "hidden" name = "messageid" value = "{{msg.key.urlsafe()}}">
+                        <button type = "submit" class="btn btn-success btn-sm">Map it!</button>
+                      </form>
+                      {% else %}
+                      <button type = "submit" class="btn btn-default btn-sm disabled">Map it!</button>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% if msg.error != "" %}
+                  <tr>
+                    <div class="collapse" id="error{{msg.createDate.strftime("%M%S%f")}}">
+                      <div class = "alert alert-danger">
+                        {{msg.error}}
+                      </div>
                     </div>
-                  </div>
-                </tr>
-                {% endif %}
-                {% endfor %}
-              </tbody>
-            </table>
+                  </tr>
+                  {% endif %}
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        </div>
       </div>
-    </div>
-  </div>
+    </div id="msgModal">
 
+  </div> <!-- .container -->
 
   <script type="text/javascript">
     $(function () {
