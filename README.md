@@ -26,7 +26,7 @@ All views are beautifully designed using Bootstrap based CSS. Feedback and appli
 
 ![MapMove](/doc/MapMove_Selection.png)
 
-## Python Backend
+## Powerful Backend
 
 The app is written in Python. Jinja enables frontend templating. Google Map APIs are used to get geo-location information.
 
